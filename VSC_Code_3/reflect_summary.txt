@@ -1,0 +1,39 @@
+反射
+
+
+1- 反射获取变量信息
+    // 注意 ： 把这里的 getType 看成一个大的结构体 ， getValue 看成我们这个结构体的一个对象 ， 就不难理解了
+    // 1- getType := reflect.TypeOf(input)
+    // 2- getValue := reflect.ValueOf(input)
+    // 获取结构体中的字段 ：
+	/*
+		 1- 首先获取类型 ：  getType := reflect.TypeOf(传入的对象)
+		 2- 获取字段个数 ：  num := getType.NumFiled() + for循环
+		 3- 获取字段 :      filed := getType.Filed(index)
+		 4- 获取值 ：       value := getValue.Filed(index).Interface()
+	*/
+
+
+2- 修改反射对象的值  一定要用指针！指针！指针！！！！！
+    // 步骤:
+	// 1-  value := reflect.ValueOf(&对象)
+	// 2-  newValue := value.Elem()
+	// 3-  判断: newValue.CanSet() ?= true
+	// 4-  newValue.Set_Type(修改后的值)
+
+
+3- 反射调用方法和函数
+    // 反射调用方法
+	// 1- value := reflect.ValueOf(对象)
+	// 2- value.MethodByName("方法名字").Call(参数)
+    //      1- 方法没有参数 .Call(nil)
+    //      2- 方法有参数   .Call(slice)
+	//         slice := make([]reflect.Value , 参数个数)
+	//         slice[0] = reflect.ValueOf(参数)
+	//         slice[...] = reflect.ValueOf(参数)    
+
+    // 反射调用函数
+	// 1- name := reflect.ValueOf(函数名)
+	// 2- name.Call(参数)
+	// 3- 参数没有就填 nil , 有就填入切片 ， 有返回值需要有切片来接收数据
+

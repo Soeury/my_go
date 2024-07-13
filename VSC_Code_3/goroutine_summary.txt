@@ -1,0 +1,80 @@
+goroutine 协程 :
+
+
+-1  在调用函数前加上 go 即可成为 goroutine 
+	// goroutine : 协程  -> 只在某个函数调用前面加上 go 即可
+	// 1-  当遇到 goroutine 时 ， goroutine 的调用立即返回 ， 与函数不同 ， go 不等待 goroutine 执行结束
+	// 2-  goroutine 后 main 函数中的语句与 goroutine 并发执行
+	// 3-  main 函数是一个主 goroutine ， 当这个主 goroutine 执行结束后， 其他的 goroutine 就不会执行
+
+
+-2  runtime 包 : 操控 goroutine
+	// 1-  runtime.Gosched() 当前函数让出时间片给其他的 goroutine
+	//  不一定能成功 , 但是大概率能让其他的goroutine先执行，然后再执行当前函数
+    // 2-  runtime.Goexit() 退出当前 goroutine 协程 ，
+	// 和 return 不同 ，  使用return 会退出当前函数 ， 但是goroutine 会继续执行 。 使用 Goexit 之后 ， 直接退出 goroutine
+
+
+3-  临界资源修改的问题
+	// goroutine 中对临界资源处理不当 ， 会导致数据不一致的问题
+    // 解决办法 : 上锁 + 解锁 (高并发不推荐使用这种方法) 使得在某个时间段内，只有一个 goroutine 来访问这个共享数据
+	//      1- 先创建一个锁 :  var mutex sync.Mutex
+	//      2- 上锁 : mutex.Lock()
+	//      3- 解锁 : mutex.Unlock()
+    // WaitGroup 代替 time.Sleep()   goroutine 结束执行后程序立即向后执行 ， 减少多余的等待时间
+    //      1- 先创建一个变量 : var wg sync.WaitGroup
+    //      2- wg.Add(num) 设置需要等待的 goroutine 的个数 num 
+    //      3- wg.Done() 每执行一次就会让需要等待的 goroutine 的个数 -1
+    //      4- wg.Wait() 等待所有的  goroutine 执行完毕后 程序立即向后执行
+
+
+// 其实，其实, 不推荐 3- 这种 上锁 + 解锁 的办法    ->    channel
+
+
+channel 通道
+
+1-  channel 初识
+    // 一个时间只有一个 goroutine 能够访问 channel 中的数据 ， 使用 channel 在不同的 goroutine 中传递内存数据
+	// 通道接收数据后 ， 必须向外发送数据 ， 并且只有在发送数据之后才能继续接收 ，否则不能接收新的数据
+	// 通道发送数据后 ， 必须接收到了数据才能继续发送 ， 否则不能发送新的数据
+	// 创建通道后 ， 必须要使用 ， 否则出现死锁
+	// 通道是 goroutine 之间的连接 ， 通道发送和接收数据必须在不同的 goroutine 上
+
+	// name := make(chan type)
+	//     1- 向外发送数据   data := <- name
+	//     2- 通道接收数据   name <- data
+
+
+2-  close(channel)和 for range 同时使用 ， 用了 for range 之后 必须要 close(channel) 才能停止读取数据
+
+
+3-  缓冲 、 非缓冲 channel
+    // 非缓冲通道 ：写入一个数据后堵塞 ， 这个数据读完之后才能继续写入数据  ch := make(chan type)
+	// 缓冲通道 : 给这个通道设置一个容量 ， 写入数据后容量满了才堵塞 ， 读出数据后才能继续写入  ch := make(chan type , capacity)
+
+
+4-  定向通道
+    // 定向通道 只能写入数据或者读出数据
+	// 单项通道一般使用在 函数的 -参数 和 -返回值 中
+	// 1- 只写入 : ch := make(chan <- type)
+	// 2- 只读出 : ch := make(<- chan type)
+
+
+5-  select 语句 :    
+    // Select : 类似于 switch 语句
+	//    1- Select 中的每个case 语句都必须是通道的操作
+	//    2- Select 若多个case 语句都可以执行，那么会随机选择一个可以执行的 case 语句 ， 其余的 case 不会执行
+	//    3- 如果没有 case 语句可以执行
+	//         1- 如果有 default 语句 ：则执行 default 语句
+	//         2- 如果没有 default 语句 ， Select 会阻塞， 直到有某个 case 可以执行
+
+
+6-  timer定时器 ： timer 包下的一些有关 channel 的用法
+    // 1-  timer := time.NewTimer(time.second)
+	//     timerChan := timer.C
+	//     stop := timer.Stop()  用来停止阻塞
+	// 2-  timerChan := time.After(time.second * n)  这里直接返回 channel 不像上面那样  timer.C 把通道拿出来  
+	// 3-  time.AfterFunc(time.second * n , func_name)  没有返回值 ， 这里表示在指定时间后触发函数执行
+
+
+
